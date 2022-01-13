@@ -3,4 +3,5 @@ A project for educational purpose to understand the simple Pipeline CPU with sub
 
 
 # Version
-- v1.0.0: 5 stage pipeline cpu
+- v1.0.0: 
+    - 5 stage pipeline cpu
