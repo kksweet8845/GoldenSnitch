@@ -9,7 +9,7 @@ module ProgramCounter(
 
 reg pc;
 
-always@(posedge clk or negedge rst) begin
+always@(negedge clk or negedge rst) begin
     if(!rst) begin
         pc <= 0;
     end else begin
