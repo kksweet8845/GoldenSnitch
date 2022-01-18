@@ -2,7 +2,7 @@ module GS_Decoder
     import gs_pkg::*
 (
     input   logic           rst
-    input   logic [31:0]    instr,
+    input   logic [31:0]    instr_i,
 
     output  logic [2:0]     ImmType,
     output  logic           PCtoRegSrc,
@@ -32,13 +32,13 @@ module GS_Decoder
 
 
 
-    assign base         = instr[1:0];
-    assign opcode       = instr[6:2];
-    assign rd           = instr[11:7];
-    assign funct3       = instr[14:12];
-    assign rs1_addr     = instr[19:15];
-    assign rs2_addr     = instr[24:20];
-    assign funct7       = instr[31:25];
+    assign base         = instr_i[1:0];
+    assign opcode       = instr_i[6:2];
+    assign rd           = instr_i[11:7];
+    assign funct3       = instr_i[14:12];
+    assign rs1_addr     = instr_i[19:15];
+    assign rs2_addr     = instr_i[24:20];
+    assign funct7       = instr_i[31:25];
 
 
 
@@ -205,19 +205,19 @@ module GS_Decoder
                 imm = 0;
             end
             3'b001: begin
-                imm = {{20{instr[31]}}, instr[31:20]};
+                imm = {{20{instr_i[31]}}, instr_i[31:20]};
             end
             3'b010: begin
-                imm = {{20{instr[31]}}, instr[31:25], instr[11:7]};
+                imm = {{20{instr_i[31]}}, instr_i[31:25], instr_i[11:7]};
             end
             3'b011: begin
-                imm = {{20{instr[31]}}, instr[7], instr[30:25], instr[11:8], 1'b0}; 
+                imm = {{20{instr_i[31]}}, instr_i[7], instr_i[30:25], instr_i[11:8], 1'b0}; 
             end
             3'b100: begin
                 imm = {imm[31:12], 12'b0};
             end
             3'b101: begin
-                imm = {{12{instr[31]}}, instr[19:12], instr[20], instr[30:21], 1'b0};
+                imm = {{12{instr_i[31]}}, instr_i[19:12], instr_i[20], instr_i[30:21], 1'b0};
             end
             default: begin
                 imm = 0;
