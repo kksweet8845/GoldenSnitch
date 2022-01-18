@@ -73,7 +73,7 @@ module GS_Decoder
                 OP: begin
                     ImmType = 3'd0; PCtoRegSrc = 0; 
                     ALUType = {funct7[5], funct3};
-                    BType = 3'b010;
+                    BType = 1'b0;
                     PCSrc = 2'b00;
                     MemWrite = 0;
                     MemRead = 0;
@@ -86,7 +86,7 @@ module GS_Decoder
                 OP_IMM: begin
                     ImmType = 3'd1; PCtoRegSrc = 0;
                     ALUType = {funct7[5], funct3};
-                    BType = 3'b010;
+                    BType = 1'b0;
                     PCSrc = 2'b00;
                     MemWrite = 0;
                     MemRead = 0;
@@ -98,8 +98,8 @@ module GS_Decoder
                 end
                 LOAD: begin
                     ImmType = 3'd1; PCtoRegSrc = 0;
-                    ALUType = 4'b0000;
-                    BType = 3'b010;
+                    ALUType = PLUS;
+                    BType = 1'b0;
                     PCSrc = 2'b00;
                     MemWrite = 0;
                     MemRead = 1;
@@ -111,8 +111,8 @@ module GS_Decoder
                 end
                 STORE: begin
                     ImmType = 3'd2; PCtoRegSrc = 0;
-                    ALUType = 4'b0000; //* +
-                    BType = 3'b010;
+                    ALUType = PLUS; //* +
+                    BType = 1'b0;
                     PCSrc = 2'b00;
                     MemWrite = 1;
                     MemRead = 0;
@@ -124,8 +124,8 @@ module GS_Decoder
                 end
                 BRANCH: begin
                     ImmType = 3'd3; PCtoRegSrc = 0; //* Don't care
-                    ALUType = {1'b0, funct3};
-                    BType = funct3;
+                    ALUType = {1'b1, funct3};
+                    BType = 1'b0;
                     PCSrc = 2'b11;
                     MemWrite = 0;
                     MemRead = 0;
@@ -137,8 +137,8 @@ module GS_Decoder
                 end
                 JALR: begin
                     ImmType = 3'd1; PCtoRegSrc = 0; //* rd = pc+4;
-                    ALUType = 4'b0000; //* +
-                    BType = 0;
+                    ALUType = PLUS; //* +
+                    BType = 1'b0;
                     PCSrc = 2'b10;
                     MemWrite = 0;
                     MemRead = 0;
@@ -150,7 +150,7 @@ module GS_Decoder
                 end
                 JAL: begin
                     ImmType = 3'd5; PCtoRegSrc = 0;  //* rd = pc+4;
-                    ALUType = 4'hf; //* Don't care
+                    ALUType = FORWARD; //* Don't care
                     BType = 3'b010;
                     PCSrc = 2'b01;
                     MemWrite = 0;
@@ -163,8 +163,8 @@ module GS_Decoder
                 end
                 AUIPC: begin
                     ImmType = 3'd4; PCtoRegSrc = 1; //* rd = pc+imm;
-                    ALUType = 4'hf; //* Don't Care
-                    BType = 3'b010;
+                    ALUType = FORWARD; //* Don't Care
+                    BType = 1'b0;
                     PCSrc = 2'b00;
                     MemWrite = 0;
                     MemRead = 0;
@@ -176,8 +176,8 @@ module GS_Decoder
                 end
                 LUI: begin
                     ImmType = 3'd4; PCtoRegSrc = 0; //*Don't care
-                    ALUType = 4'hf; //* Don't care
-                    BType = 3'b010;
+                    ALUType = FORWARD; //* Don't care
+                    BType = 1'b0;
                     PCSrc = 2'b00;
                     MemWrite = 0;
                     MemRead = 0;
@@ -187,7 +187,6 @@ module GS_Decoder
                     RegWrite = 1;
                     DataSize = 0;
                 end
-
                 endcase
             end
             endcase
