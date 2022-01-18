@@ -47,11 +47,28 @@ typedef enum logic [4:0] {
     INITIAL,
     PENDING,
     FETCHING,
-
-
-
 } pf_state_t;
 
+
+typedef enum logic [3:0] {
+    PLUS    = 4'b0000,
+    MINUS   = 4'b1000,
+    SLL     = 4'b0001,
+    SLT     = 4'b0010,
+    SLTU    = 4'b0011,
+    XOR     = 4'b0100,
+    SRL     = 4'b0101,
+    SRA     = 4'b1101,
+    OR      = 4'b0110,
+    AND     = 4'b0111,
+    FORWARD = 4'b1010,
+    BEQ     = 4'b1000,
+    BNE     = 4'b1001,
+    BLT     = 4'b1100,
+    BGE     = 4'b1101,
+    BLTU    = 4'b1110,
+    BGEU    = 4'b1111
+} alu_type_t;
 
 
 
