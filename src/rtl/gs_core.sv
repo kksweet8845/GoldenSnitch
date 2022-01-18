@@ -1,6 +1,7 @@
 module GS_Core
     import gs_pkg::*
 #(
+    BOOT_ADDR       = 0,
     ADDR_SIZE       = 32,
     WORD_SIZE       = 32,
     BYTES           = 4 
