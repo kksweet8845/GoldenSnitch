@@ -6,15 +6,11 @@ module GS_CtrlUnit
 
     //* instr fetch signals
     // input   logic       if_fetch_failed_i,
-    input   logic       if_fetch_ready_i,
     input   logic       if_fetch_valid_i,
 
     //* instr decode signals
-    input   logic       id_instr_misaligned_i,
-    input   logic       id_busy_i,
     input   logic       id_ready_i,
     input   logic       id_uncod_jumps_i,
-
 
     //* execution signals
     input   logic       ex_br_taken_i,
@@ -28,10 +24,10 @@ module GS_CtrlUnit
 
     //* stall logic
     input   logic       load_to_use_i,
-    input   logic       is_loading_i,
+    // input   logic       is_loading_i,
 
-    output  logic [1:0] rs1_forward_o,
-    output  logic [1:0] rs2_forward_o,
+    output  logic [1:0] rs1_forward_sel_o,
+    output  logic [1:0] rs2_forward_sel_o,
 
     output  logic       is_decoding_o,
     output  logic [3:0] pc_mux_sel_o,
@@ -66,7 +62,7 @@ module GS_CtrlUnit
         end
         FIRST_FETCH: begin
             is_decoding_o = 1'b0;
-            ctrl_fsm_ns = (if_fetch_ready_i && id_ready_i) ? DECODE : FIRST_FETCH;
+            ctrl_fsm_ns = (if_fetch_valid_i && id_ready_i) ? DECODE : FIRST_FETCH;
         end
         DECODE: begin
             if(ex_br_taken_i) begin
@@ -75,7 +71,7 @@ module GS_CtrlUnit
                 //* Need to flush if id stage
                 flush_if = 1'b1;
                 flush_id = 1'b1;
-                ctrl_fsm_ns = DECODE;
+                ctrl_fsm_ns = WAIT_FETCH;
             end else if(id_uncod_jumps_i) begin
                 is_decoding_o = 1'b0;
                 pc_mux_sel_o = PC_JUMP;
@@ -89,7 +85,7 @@ module GS_CtrlUnit
             end
         end
         WAIT_FETCH: begin
-            ctrl_fsm_ns = (if_fetch_ready_i && id_ready_i) ? DECODE : WAIT_FETCH;
+            ctrl_fsm_ns = (if_fetch_valid_i && id_ready_i) ? DECODE : WAIT_FETCH;
         end
         endcase
     end
@@ -101,22 +97,30 @@ module GS_CtrlUnit
             halt_id = 1'b0;
         end else begin
             //* if load to use, need to stall until get data
-            if(load_to_use_i == 1'b1 && is_loading_i == 1'b1) begin
+            // if(load_to_use_i == 1'b1 && is_loading_i == 1'b1) begin
+            //     halt_if = 1'b1;
+            //     halt_id = 1'b1;
+            //     halt_ex = 1'b1;
+            // end else if(load_to_use_i == 1'b1) begin
+            //     halt_if = 1'b1;
+            //     halt_id = 1'b1;
+            //     halt_ex = 1'b0;
+            // end else if(is_loading_i == 1'b1) begin
+            //     halt_if = 1'b1;
+            //     halt_id = 1'b1;
+            //     halt_ex = 1'b1;
+            // end else begin
+            //     halt_if = 1'b0;
+            //     halt_id = 1'b0;
+            //     halt_ex = 1'b0;
+            // end
+
+            if(load_to_use_i == 1'b1) begin
                 halt_if = 1'b1;
                 halt_id = 1'b1;
-                halt_ex = 1'b1;
-            end else if(load_to_use_i == 1'b1) begin
-                halt_if = 1'b1;
-                halt_id = 1'b1;
-                halt_ex = 1'b0;
-            end else if(is_loading_i == 1'b1) begin
-                halt_if = 1'b1;
-                halt_id = 1'b1;
-                halt_ex = 1'b1;
             end else begin
                 halt_if = 1'b0;
                 halt_id = 1'b0;
-                halt_ex = 1'b0;
             end
         end
     end
@@ -133,18 +137,18 @@ module GS_CtrlUnit
 
 
     always_comb begin : forward_logic
-        rs1_forward_o = RS1_REG_NO_FORWARD;
-        rs2_forward_o = RS2_REG_NO_FORWARD;
+        rs1_forward_sel_o = REG_NO_FORWARD;
+        rs2_forward_sel_o = REG_NO_FORWARD;
 
         if(reg_rs1_ex_i == 1'b1) begin
-            rs1_forward_o = RS1_REG_EX_FORWARD;
+            rs1_forward_sel_o = REG_EX_FORWARD;
         end else if(reg_rs1_wb_i == 1'b1) begin
-            rs1_forward_o = RS1_REG_WB_FORWARD;
+            rs1_forward_sel_o = REG_WB_FORWARD;
         end
         if(reg_rs2_ex_i == 1'b1) begin
-            rs2_forward_o = RS2_REG_EX_FORWARD;
+            rs2_forward_sel_o = REG_EX_FORWARD;
         end else if(reg_rs2_wb_i == 1'b1) begin
-            rs2_forward_o = RS2_REG_WB_FORWARD;
+            rs2_forward_sel_o = REG_WB_FORWARD;
         end
     end
 

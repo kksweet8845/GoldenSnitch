@@ -21,13 +21,13 @@ typedef enum logic [3:0] {
 } pc_sel_t;
 
 typedef enum logic [2:0] {
-    RS1_REG_NO_FORWARD,
-    RS1_REG_WB_FORWARD,
-    RS1_REG_EX_FORWARD,
-    RS2_REG_NO_FORWARD,
-    RS2_REG_WB_FORWARD,
-    RS2_REG_EX_FORWARD
+    REG_NO_FORWARD = 2'b00,
+    REG_WB_FORWARD = 2'b01,
+    REG_EX_FORWARD = 2'b10
 } forward_ctrl_t;
+
+
+
 
 
 typedef enum logic [4:0] {
