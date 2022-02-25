@@ -29,7 +29,9 @@ module GS_ID_STAGE
     output  logic [4:0]     rs1_addr_o,
     output  logic [4:0]     rs2_addr_o,
     output  logic [4:0]     rd_addr_o,
-    output  logic [31:0]    pc_to_reg_data_o;
+    output  logic [31:0]    pc_to_reg_data_o,
+    output  logic [31:0]    pc_4_o,
+    output  logic [31:0]    pc_imm_o,
 
 
     //* read data
@@ -58,7 +60,7 @@ module GS_ID_STAGE
     input   logic           flush_id_i,
     input   logic           if_valid_i,
 
-    output  logic           id_valid_o,
+    output  logic           id_valid_o
 ); 
 
 
@@ -68,6 +70,8 @@ module GS_ID_STAGE
 
     logic [3:0]     id_fsm_ns, id_fsm_cs;
     logic [31:0]    instr;
+    logic [31:0]    pc;
+    logic [31:0]    pc_4;
     logic           id_valid;
 
 
@@ -119,8 +123,12 @@ module GS_ID_STAGE
         end else begin
             if(if_valid_i &&  ~halt_id_i && ~flush_id_i) begin
                 instr <= instr_i;
+                pc <= pc_i;
+                pc_4 <= pc_4_i;
             end else if(flush_id_i) begin
                 instr <= 32'd0;
+                pc <= 32'd0;
+                pc_4 <= 32'd0;
             end
             id_valid <= ~halt_id_i && ~flush_id_i;
         end
@@ -199,7 +207,7 @@ module GS_ID_STAGE
     );
 
     //* pc_out + imm    
-    assign pc_out_imm = pc_i + decoder_imm_o;
+    assign pc_out_imm = pc + decoder_imm_o;
 
     //* pc_4 or pc_out_imm
     GS_MUX_2 #(
@@ -208,7 +216,7 @@ module GS_ID_STAGE
         .INPUT_0(1'b0),
         .INPUT_1(1'b1)
     ) pc_src_mux(
-        .a0                     (pc_4_i             ),
+        .a0                     (pc_4               ),
         .a1                     (pc_out_imm         ),
         .sel                    (pc_src_mux_sel     ),
         .out                    (pc_to_reg_data     )
@@ -244,6 +252,8 @@ assign  rf_lsu_rd_wen_i     = lsu_MemRead_i;
 assign  rf_lsu_rd_addr_i    = lsu_rd_addr_i;
 assign  rf_lsu_rd_data_i    = lsu_rd_data_i;
 assign  pc_to_reg_data_o    = pc_to_reg_data;
+assign  pc_4_o              = pc_4;
+assign  pc_imm_o            = pc_imm;
 assign  id_valid_o          = id_valid;
 
 

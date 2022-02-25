@@ -25,6 +25,8 @@ module GS_EX_STAGE
     input   logic [4:0]     id_rs2_addr_i,
     input   logic [4:0]     id_rd_addr_i,
 
+    input   logic [31:0]    id_pc_4_i,
+    input   logic [31:0]    id_pc_imm_i,
     input   logic [31:0]    id_pc_to_reg_i,
 
     input   logic [31:0]    id_rs1_data_i,
@@ -52,7 +54,10 @@ module GS_EX_STAGE
     input   logic           flush_ex_i,
 
     output  logic           ex_valid_o,
+
+    output  logic [31:0]    ex_br_addr_o,
     output  logic           ex_br_taken_o,
+    output  logic [31:0]    ex_uncod_jump_addr_o
 
 );
 
@@ -74,6 +79,8 @@ module GS_EX_STAGE
     logic [4:0]     rs2_addr_reg;
     logic [4:0]     rd_addr_reg;
 
+    logic [31:0]    pc_4_reg;
+    logic [31:0]    pc_imm_reg;
     logic [31:0]    pc_to_reg_reg;
 
     logic [31:0]    rs1_data_reg;
@@ -116,6 +123,8 @@ module GS_EX_STAGE
             rd_addr_reg     <= 0;
             rs1_data_reg    <= 0;
             rs2_data_reg    <= 0;
+            pc_4_reg        <= 0;
+            pc_imm_reg      <= 0;
             pc_to_reg_reg   <= 0;
         end else begin
             if(id_valid_i && ~flush_ex_i && ~halt_ex_i) begin
@@ -134,8 +143,12 @@ module GS_EX_STAGE
                 rd_addr_reg     <= id_rd_addr_i;
                 rs1_data_reg    <= id_rs1_data_i;
                 rs2_data_reg    <= id_rs2_data_i;
+                pc_4_reg        <= id_pc_4_i;
+                pc_imm_reg      <= id_pc_imm_i;
                 pc_to_reg_reg   <= id_pc_to_reg_i;
             end else if(flush_ex_i) begin
+                pc_4_reg        <= 0;
+                pc_imm_reg      <= 0;
                 pc_to_reg_reg   <= 0;
                 ALUType_reg     <= 0;
                 BType_reg       <= 0;
@@ -227,9 +240,9 @@ assign rf_rd_data_o             = alu_alu_data;
 assign ex_PCSrc_o               = PCSrc_reg;
 
 assign ex_valid_o               = ex_valid;
+assign ex_br_addr_o             = (alu_br_flag) ? pc_imm_reg : pc_4_reg;
 assign ex_br_taken_o            = alu_br_flag;
-
-
+assign ex_uncod_jump_addr_o     = alu_alu_data;
 
 
 

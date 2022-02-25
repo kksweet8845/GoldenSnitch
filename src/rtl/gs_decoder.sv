@@ -125,7 +125,7 @@ module GS_Decoder
                     RegWrite = 0;
                     DataSize = 0;
                 end
-                JALR: begin
+                JALR: begin //* pc = imm + rs1
                     ImmType = 3'd1; PCtoRegSrc = 0; //* rd = pc+4;
                     RDSrc = 1'b1;
                     ALUType = PLUS; //* +
@@ -137,7 +137,7 @@ module GS_Decoder
                     RegWrite = 1;
                     DataSize = 0;
                 end
-                JAL: begin
+                JAL: begin //* pc = pc + imm
                     ImmType = 3'd5; PCtoRegSrc = 0;  //* rd = pc+4;
                     RDSrc = 1'b1;
                     ALUType = FORWARD; //* Don't care

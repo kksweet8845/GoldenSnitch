@@ -30,6 +30,7 @@ logic [31:0]        if_instr_addr;
 logic [31:0]        if_instr_data_i;
 logic [31:0]        if_instr_data_o;
 logic [31:0]        if_pc_out;
+logic [31:0]        if_pc_out_4;
 
 logic               if_halt_if;
 logic               if_flush_if;
@@ -37,7 +38,7 @@ logic               if_id_ready;
 logic               if_valid;
 
 //* id stage port
-logic [31:0]        id_pc_4;
+logic [31:0]        id_pc_4_i;
 logic [31:0]        id_pc;
 logic [31:0]        id_instr;
 logic [3:0]         id_ALUType;
@@ -54,6 +55,8 @@ logic [4:0]         id_rs1_addr;
 logic [4:0]         id_rs2_addr;
 logic [4:0]         id_rd_addr;
 logic [31:0]        id_pc_to_reg_data;
+logic [31:0]        id_pc_4_o;
+logic [31:0]        id_pc_imm;
 logic [31:0]        id_rs1_wb_data;
 logic [31:0]        id_rs1_ex_data;
 logic [1:0]         id_rs1_forward_sel;
@@ -90,6 +93,8 @@ logic [31:0]        ex_id_imm;
 logic [4:0]         ex_id_rs1_addr;
 logic [4:0]         ex_id_rs2_addr;
 logic [4:0]         ex_id_rd_addr;
+logic [31:0]        ex_id_pc_4;
+logic [31:0]        ex_id_pc_imm;
 logic [31:0]        ex_id_pc_to_reg;
 logic [31:0]        ex_id_rs1_data;
 logic [31:0]        ex_id_rs2_data;
@@ -106,7 +111,9 @@ logic               ex_id_valid;
 logic               ex_halt_ex;
 logic               ex_flush_ex;
 logic               ex_ex_valid;
+logic [31:0]        ex_ex_br_addr;
 logic               ex_ex_br_taken;
+logic [31:0]        ex_ex_uncod_jump_addr;
 
 //* wb stage
 logic               wb_lsu_rvalid;
@@ -144,6 +151,7 @@ logic               lsu_lsu_busy;
 logic               ctrl_if_fetch_valid;
 logic               ctrl_id_ready;
 logic               ctrl_id_uncod_jumps;
+logic               ctrl_ex_uncod_jumps;
 logic               ctrl_ex_br_taken;
 logic               ctrl_ex_ready;
 logic               ctrl_reg_rs1_wb;
@@ -163,6 +171,14 @@ logic               ctrl_flush_ex;
 logic               ctrl_halt_if;
 logic               ctrl_halt_id;
 logic               ctrl_halt_ex;
+
+
+
+
+
+
+
+
 
 /*=============================================================================+
 /        // ██╗███████╗    ░██████╗████████╗░█████╗░░██████╗░███████╗        /
@@ -187,7 +203,8 @@ GS_IF_STAGE #(
     .instr_addr_o   (if_instr_addr      ),
     .instr_data_i   (if_instr_data_i    ),
     .instr_data_o   (if_instr_data_o    ),
-    .pc_out_o       (if_pc_out          )
+    .pc_out_o       (if_pc_out          ),
+    .pc_out_4_o     (if_pc_out_4        )
 );
 
 
@@ -207,7 +224,7 @@ GS_ID_STAGE #(
 ) gs_id_stage_i(
     .clk                (clk                        ),
     .rst                (rst                        ),
-    .pc_4_i             (id_pc_4                    ),
+    .pc_4_i             (id_pc_4_i                  ),
     .pc_i               (id_pc                      ),
     .instr_i            (id_instr                   ),
     .ALUType_o          (id_ALUType                 ),
@@ -224,6 +241,8 @@ GS_ID_STAGE #(
     .rs2_addr_o         (id_rs2_addr                ),
     .rd_addr_o          (id_rd_addr                 ),
     .pc_to_reg_data_o   (id_pc_to_reg_data          ),
+    .pc_4_o             (id_pc_4_o                    ),
+    .pc_imm_o           (id_pc_imm                  ),
     .rs1_wb_data_i      (id_rs1_wb_data             ),
     .rs1_ex_data_i      (id_rs1_ex_data             ),
     .rs1_forward_sel_i  (id_rs1_forward_sel         ),
@@ -260,38 +279,42 @@ GS_EX_STAGE #(
     .WORD_SIZE(WORD_SIZE),
     .BYTES    (BYTES)
 ) gs_ex_stage_i(
-    .clk                (clk                    ),
-    .rst                (rst                    ),
-    .id_ALUType_i       (ex_id_ALUType          ),
-    .id_BType_i         (ex_id_BType            ),
-    .id_PCSrc_i         (ex_id_PCSrc            ),
-    .id_MemWrite_i      (ex_id_MemWrite         ),
-    .id_MemRead_i       (ex_id_MemRead          ),
-    .id_RDSrc_i         (ex_id_RDSrc            ),
-    .id_ALUSrc_i        (ex_id_ALUSrc           ),
-    .id_RegWrite_i      (ex_id_RegWrite         ),
-    .id_DataSize_i      (ex_id_DataSize         ),
-    .id_imm_i           (ex_id_imm              ),
-    .id_rs1_addr_i      (ex_id_rs1_addr         ),
-    .id_rs2_addr_i      (ex_id_rs2_addr         ),
-    .id_rd_addr_i       (ex_id_rd_addr          ),
-    .id_pc_to_reg_i     (ex_id_pc_to_reg        ),
-    .id_rs1_data_i      (ex_id_rs1_data         ),
-    .id_rs2_data_i      (ex_id_rs2_data         ),
-    .lsu_MemWrite_o     (ex_lsu_MemWrite        ),
-    .lsu_MemRead_o      (ex_lsu_MemRead         ),
-    .lsu_DataSize_o     (ex_lsu_DataSize        ),
-    .lsu_rs2_data_o     (ex_lsu_rs2_data        ),
-    .lsu_data_addr_o    (ex_lsu_data_addr       ),
-    .rf_RegWrite_o      (ex_rf_RegWrite         ),
-    .rf_rd_addr_o       (ex_rf_rd_addr          ),
-    .rf_rd_data_o       (ex_rf_rd_data          ),
-    .ex_PCSrc_o         (ex_ex_PCSrc            ),
-    .id_valid_i         (ex_id_valid            ),
-    .halt_ex_i          (ex_halt_ex             ),
-    .flush_ex_i         (ex_flush_ex            ),
-    .ex_valid_o         (ex_ex_valid            ),
-    .ex_br_taken_o      (ex_ex_br_taken         )
+    .clk                    (clk                    ),
+    .rst                    (rst                    ),
+    .id_ALUType_i           (ex_id_ALUType          ),
+    .id_BType_i             (ex_id_BType            ),
+    .id_PCSrc_i             (ex_id_PCSrc            ),
+    .id_MemWrite_i          (ex_id_MemWrite         ),
+    .id_MemRead_i           (ex_id_MemRead          ),
+    .id_RDSrc_i             (ex_id_RDSrc            ),
+    .id_ALUSrc_i            (ex_id_ALUSrc           ),
+    .id_RegWrite_i          (ex_id_RegWrite         ),
+    .id_DataSize_i          (ex_id_DataSize         ),
+    .id_imm_i               (ex_id_imm              ),
+    .id_rs1_addr_i          (ex_id_rs1_addr         ),
+    .id_rs2_addr_i          (ex_id_rs2_addr         ),
+    .id_rd_addr_i           (ex_id_rd_addr          ),
+    .id_pc_4_i              (ex_id_pc_4             ),
+    .id_pc_imm_i            (ex_id_pc_imm           ),
+    .id_pc_to_reg_i         (ex_id_pc_to_reg        ),
+    .id_rs1_data_i          (ex_id_rs1_data         ),
+    .id_rs2_data_i          (ex_id_rs2_data         ),
+    .lsu_MemWrite_o         (ex_lsu_MemWrite        ),
+    .lsu_MemRead_o          (ex_lsu_MemRead         ),
+    .lsu_DataSize_o         (ex_lsu_DataSize        ),
+    .lsu_rs2_data_o         (ex_lsu_rs2_data        ),
+    .lsu_data_addr_o        (ex_lsu_data_addr       ),
+    .rf_RegWrite_o          (ex_rf_RegWrite         ),
+    .rf_rd_addr_o           (ex_rf_rd_addr          ),
+    .rf_rd_data_o           (ex_rf_rd_data          ),
+    .ex_PCSrc_o             (ex_ex_PCSrc            ),
+    .id_valid_i             (ex_id_valid            ),
+    .halt_ex_i              (ex_halt_ex             ),
+    .flush_ex_i             (ex_flush_ex            ),
+    .ex_valid_o             (ex_ex_valid            ),
+    .ex_br_addr_o           (ex_ex_br_addr          ),
+    .ex_br_taken_o          (ex_ex_br_taken         ),
+    .ex_uncod_jump_addr_o   (ex_ex_uncod_jump_addr  )
 );
 
 
@@ -377,6 +400,7 @@ GS_CtrlUnit gs_ctrlunit_i(
     .if_fetch_valid_i   (ctrl_if_fetch_valid    ),
     .id_ready_i         (ctrl_id_ready          ),
     .id_uncod_jumps_i   (ctrl_id_uncod_jumps    ),
+    .ex_uncod_jumps_i   (ctrl_ex_uncod_jumps    ),
     .ex_br_taken_i      (ctrl_ex_br_taken       ),
     .ex_ready_i         (ctrl_ex_ready          ),
     .reg_rs1_wb_i       (ctrl_reg_rs1_wb        ),
@@ -396,6 +420,32 @@ GS_CtrlUnit gs_ctrlunit_i(
     .halt_id_o          (ctrl_halt_id           ),
     .halt_ex_o          (ctrl_halt_ex           )
 );
+
+
+assign if_pc_mux_sel = ctrl_pc_mux_sel;
+assign if_br_addr = ex_ex_br_addr;
+assign if_jump_addr =  (ctrl_ex_uncod_jumps) ?  ex_uncod_jump_addr : (ctrl_id_uncod_jumps) ? id_pc_imm;
+assign if_instr_data_i     = imm_data_i; 
+
+assign id_pc_4_i            = if_pc_out_4;
+assign id_pc                = if_pc_out;
+assign id_instr             = if_instr_data_o;
+assign id_rs1_wb_data       = lsu_rdata;
+assign id_rs1_ex_data       = ex_rf_rd_data;
+assign id_rs1_forward_sel   = ctrl_rs1_forward_sel;
+assign id_rs2_wb_data       = lsu_rdata;
+assign id_rs2_ex_data       = ex_rf_rd_data;
+assign id_rs2_forward_sel   = ctrl_rs2_forward_sel;
+assign id_ex_RegWrite       = ex_rf_RegWrite;
+assign id_ex_rd_addr        = ex_rf_rd_addr;
+assign id_ex_rd_data        = ex_rf_rd_data;
+assign id_lsu_MemRead       = lsu_ex_MemRead;
+
+
+assign ctrl_id_uncod_jumps = (id_PCSrc == 2'b01) ? 1'b1 : 1'b0;
+assign ctrl_ex_uncod_jumps = (ex_ex_PCSrc == 2'b10) ? 1'b1 : 1'b0;
+assign ctrl_ex_br_taken    =  (ex_ex_PCSrc == 2'b11 && ex_ex_br_taken) ? 1'b1 : 1'b0;
+
 
 
 

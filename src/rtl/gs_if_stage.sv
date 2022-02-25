@@ -19,6 +19,7 @@ module GS_IF_STAGE
     
     output  logic [WORD_SIZE-1:0]   instr_data_o,
     output  logic [31:0]            pc_out_o,
+    output  logic [31:0]            pc_out_4_o,
 
 
     //* control and status signals
@@ -33,6 +34,7 @@ module GS_IF_STAGE
     //* Program counter
 
     logic [31:0]        pc_out;
+    logic [31:0]        pc_out_4;
     logic               if_valid_ns, if_valid;
 
     logic [2:0]             if_fsm_cs, if_fsm_ns;
@@ -41,6 +43,7 @@ module GS_IF_STAGE
     assign pc_out_o = pc_out;
     assign if_valid_o = if_valid;
     assign instr_data_o = instr_data;
+    assign pc_out_4 = pc_out + 32'd4;
     /*
         pc logic
     */
@@ -51,9 +54,9 @@ module GS_IF_STAGE
         end else begin
            unique case(pc_mux_sel_i)
             PC_BOOT: instr_addr_o = BOOT_ADDR;
-            PC_BRNACH: instr_addr_o = (halt_if_i) ? br_addr_i : pc_out;
-            PC_JUMP: instr_addr_o = (halt_if_i) ? jump_addr_i : pc_out;
-            PC_NORMAL: instr_addr_o = (halt_if_i) ?  pc_out + 32'd4 : pc_out;
+            PC_BRNACH: instr_addr_o = (~halt_if_i) ? br_addr_i : pc_out;
+            PC_JUMP: instr_addr_o = (~halt_if_i) ? jump_addr_i : pc_out;
+            PC_NORMAL: instr_addr_o = (~halt_if_i) ?  pc_out_4 : pc_out;
            endcase
         end
     end
@@ -82,14 +85,18 @@ module GS_IF_STAGE
     always_ff@(posedge clk or negedge rst) begin
         if(!rst) begin
             pc_out <= 0;
+            if_fsm_cs <= 0;
+            if_valid <= 1'b0;
+            instr_data <= 0;
         end else begin
-            pc_out <= instr_addr_o; 
             if_fsm_cs <= if_fsm_ns;
             if_valid    <= if_valid_ns;
             if( ~flush_if_i  && ~halt_if_i) begin
                 instr_data <= instr_data_i;
+                pc_out <= instr_addr_o;
             end else if(flush_if_i) begin
                 instr_data <= 32'd0;
+                pc_out <= 32'd0;
             end
         end
     end

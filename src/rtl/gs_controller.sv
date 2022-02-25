@@ -13,6 +13,7 @@ module GS_CtrlUnit
     input   logic       id_uncod_jumps_i,
 
     //* execution signals
+    input   logic       ex_uncod_jumps_i,
     input   logic       ex_br_taken_i,
     input   logic       ex_ready_i,
 
@@ -32,13 +33,13 @@ module GS_CtrlUnit
     output  logic       is_decoding_o,
     output  logic [3:0] pc_mux_sel_o,
     output  logic       instr_fetch_o,
-    output  logic       flush_id,
-    output  logic       flush_if,
-    output  logic       flush_ex,
+    output  logic       flush_id_o,
+    output  logic       flush_if_o,
+    output  logic       flush_ex_o,
     // output  logic       flush_wb,
-    output  logic       halt_if,
-    output  logic       halt_id,
-    output  logic       halt_ex
+    output  logic       halt_if_o,
+    output  logic       halt_id_o,
+    output  logic       halt_ex_o
 );
 
 
@@ -69,14 +70,14 @@ module GS_CtrlUnit
                 is_decoding_o = 1'b0;
                 pc_mux_sel_o = PC_BRANCH;
                 //* Need to flush if id stage
-                flush_if = 1'b1;
-                flush_id = 1'b1;
+                flush_if_o = 1'b1;
+                flush_id_o = 1'b1;
                 ctrl_fsm_ns = WAIT_FETCH;
-            end else if(id_uncod_jumps_i) begin
+            end else if(id_uncod_jumps_i || ex_uncod_jumps_i) begin
                 is_decoding_o = 1'b0;
                 pc_mux_sel_o = PC_JUMP;
-                flush_if = 1'b1;
-                flush_id = 1'b1;
+                flush_if_o = 1'b1;
+                flush_id_o = 1'b1;
                 ctrl_fsm_ns = WAIT_FETCH;
             end else begin
                 is_decoding_o = 1'b1;
@@ -86,6 +87,8 @@ module GS_CtrlUnit
         end
         WAIT_FETCH: begin
             ctrl_fsm_ns = (if_fetch_valid_i && id_ready_i) ? DECODE : WAIT_FETCH;
+            flush_if_o = (if_fetch_valid_i && id_ready_i) ? 1'b0 : 1'b1;
+            flush_id_o = (if_fetch_valid_i && id_ready_i) ? 1'b0 : 1'b1;
         end
         endcase
     end
@@ -93,34 +96,34 @@ module GS_CtrlUnit
 
     always_comb begin : stall_logic
         if(!rst) begin
-            halt_if = 1'b0;
-            halt_id = 1'b0;
+            halt_if_o = 1'b0;
+            halt_id_o = 1'b0;
         end else begin
             //* if load to use, need to stall until get data
             // if(load_to_use_i == 1'b1 && is_loading_i == 1'b1) begin
-            //     halt_if = 1'b1;
-            //     halt_id = 1'b1;
-            //     halt_ex = 1'b1;
+            //     halt_if_o = 1'b1;
+            //     halt_id_o = 1'b1;
+            //     halt_ex_o = 1'b1;
             // end else if(load_to_use_i == 1'b1) begin
-            //     halt_if = 1'b1;
-            //     halt_id = 1'b1;
-            //     halt_ex = 1'b0;
+            //     halt_if_o = 1'b1;
+            //     halt_id_o = 1'b1;
+            //     halt_ex_o = 1'b0;
             // end else if(is_loading_i == 1'b1) begin
-            //     halt_if = 1'b1;
-            //     halt_id = 1'b1;
-            //     halt_ex = 1'b1;
+            //     halt_if_o = 1'b1;
+            //     halt_id_o = 1'b1;
+            //     halt_ex_o = 1'b1;
             // end else begin
-            //     halt_if = 1'b0;
-            //     halt_id = 1'b0;
-            //     halt_ex = 1'b0;
+            //     halt_if_o = 1'b0;
+            //     halt_id_o = 1'b0;
+            //     halt_ex_o = 1'b0;
             // end
 
             if(load_to_use_i == 1'b1) begin
-                halt_if = 1'b1;
-                halt_id = 1'b1;
+                halt_if_o = 1'b1;
+                halt_id_o = 1'b1;
             end else begin
-                halt_if = 1'b0;
-                halt_id = 1'b0;
+                halt_if_o = 1'b0;
+                halt_id_o = 1'b0;
             end
         end
     end
